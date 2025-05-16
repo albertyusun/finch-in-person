@@ -50,12 +50,12 @@ demand-letter-evaluator/
 ### Optional Arguments
 
 - `--reprocess`: Force reprocessing of source documents
-- `--model`: Specify which OpenAI model to use (default: gpt-4o)
+- `--model`: Specify which OpenAI model to use (default: gpt-o3)
 - `--compare`: Generate a comparison report for all evaluated letters
 
 Example:
 ```
-python main.py --reprocess --model gpt-4o --compare
+python main.py --reprocess --model o3 --compare
 ```
 
 ## Evaluation Criteria
