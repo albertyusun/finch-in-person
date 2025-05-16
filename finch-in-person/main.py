@@ -213,7 +213,6 @@ def evaluate_demand_letter(letter_path, facts, model="gpt-4o"):
             {"role": "system", "content": "You are an expert legal evaluator who specializes in assessing demand letters for personal injury cases. You have a reputation for being thorough, critical, and having very high standards. You should be strict in your evaluation and only give high scores when fully warranted by exceptional work. Apply the critical failure conditions rigorously."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.1  # Lower temperature for more consistent and critical evaluations
     )
     
     # Parse and return the evaluation results
@@ -316,7 +315,7 @@ def main():
     """Main execution function."""
     parser = argparse.ArgumentParser(description="Evaluate legal demand letters against source documents.")
     parser.add_argument("--reprocess", action="store_true", help="Force reprocessing of source documents")
-    parser.add_argument("--model", default="gpt-4o", help="OpenAI model to use for evaluation")
+    parser.add_argument("--model", default="o3-2025-04-16", help="OpenAI model to use for evaluation")
     parser.add_argument("--compare", action="store_true", help="Compare all evaluated letters")
     args = parser.parse_args()
     
