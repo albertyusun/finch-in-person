@@ -19,7 +19,6 @@ from pdfminer.high_level import extract_text  # pip install pdfminer.six
 from pypdf import PdfReader                  # pip install pypdf
 import pytesseract                            # pip install pytesseract pdf2image pillow
 from pdf2image import convert_from_path
-
 def extract_text_from_pdf(pdf_path: Union[str, Path]) -> str:
     """
     Robust text extraction that handles:
@@ -134,26 +133,26 @@ def calculate_weighted_score(scores):
     """
     # Updated weights to match the new evaluation criteria
     weights = {
-        "Structure and Organization": 0.10,
+        "Quality of Writing": 0.20,
         "Factual Presentation": 0.10,
         "Medical Documentation": 0.15,
         "Damages Calculation": 0.25,
         "Precedent and Legal Authority": 0.10,
         "Legal Strategy": 0.05,
-        "Persuasiveness": 0.10,
+        # "Persuasiveness": 0.10,
         "Settlement Justification": 0.10,
         "Source Document Representation": 0.05
     }
     
     # Map to handle variations in category naming
     category_map = {
-        "structure and organization": "Structure and Organization",
+        "quality of writing": "Quality of Writing",
         "factual presentation": "Factual Presentation",
         "medical documentation": "Medical Documentation",
         "damages calculation": "Damages Calculation",
         "precedent and legal authority": "Precedent and Legal Authority",
         "legal strategy": "Legal Strategy",
-        "persuasiveness": "Persuasiveness",
+        # "persuasiveness": "Persuasiveness",
         "settlement justification": "Settlement Justification",
         "source document representation": "Source Document Representation"
     }
