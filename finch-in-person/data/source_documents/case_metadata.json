@@ -1,0 +1,37 @@
+{
+  "case_id": "CASE-001",
+  "claimant_name": "Isabella Moreno",
+  "claimant_age": 33,
+  "dob": "1990-06-14",
+  "occupation": "Dental Hygienist",
+  "employer": "Bright Smile Dental Clinic",
+  "accident_date": "2023-11-21",
+  "accident_time": "17:42",
+  "accident_location": "7th St & McDowell Rd, Phoenix, AZ",
+  "defendant_name": "Pedro Lopez",
+  "defendant_dob": "1985-03-22",
+  "defendant_license": "AZ-12345678",
+  "vehicle_info": {
+    "make": "Ford",
+    "model": "F-150",
+    "year": 2015,
+    "plate": "AZ 8XZ-213",
+    "vin": "1FTEW1EG5FFA12345",
+    "insurance": "Guardian Auto",
+    "policy_number": "GA-987654321",
+    "policy_limit": "$100,000"
+  },
+  "claim_type": "Rear-end Motor Vehicle Accident",
+  "injuries": [
+    "Cervical strain (whiplash)",
+    "Lumbar strain",
+    "Right shoulder contusion",
+    "Anxiety and emotional distress"
+  ],
+  "treatment_facilities": [
+    "Phoenix General Hospital - Emergency Room",
+    "Costa Vista Chiropractic",
+    "Prime MRI Center",
+    "Valley Neurology Associates"
+  ]
+}
