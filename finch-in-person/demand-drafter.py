@@ -11,6 +11,12 @@ from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 
+# Initialize OpenAI client - Move this to the top of the file
+api_key = os.environ.get("PERPLEXITY_API_KEY")
+if not api_key:
+    raise ValueError("OPENAI_API_KEY environment variable must be set")
+client = OpenAI(api_key=api_key)  # Now properly initialized with error handling
+
 
 def encode_file_to_base64(file_path: str) -> tuple[str, str]:
     """Encode a file to base64 and determine its MIME type."""
@@ -25,33 +31,50 @@ def encode_file_to_base64(file_path: str) -> tuple[str, str]:
     return base64_data, mime_type
 
 prompt = """
-Generate a professional demand letter based on the provided documents. 
+Generate a professional, narrative-driven demand letter based on the provided documents. 
 
-The letter should be formal, assertive, and include relevant details from the documents. 
+The letter should read like a compelling story that illustrates the client's experience while maintaining legal professionalism. Use vivid language that helps the reader understand the full human impact of the incident, not just clinical facts. Write in a flowing narrative style rather than a bullet-point or strictly clinical format.
 
-Format the response in markdown with level 2 headings (##) for each section. Ensure you write the letter in a narrative manner. 
+Format the response in markdown with level 2 headings (##) for each section. The letter should tell a cohesive story across all sections, with natural transitions between topics.
 
-Use the following sections IN THIS EXACT ORDER with EXACTLY THESE HEADINGS: 
+Use the following sections IN THIS EXACT ORDER with EXACTLY THESE HEADINGS:
+
 - ## Statement of Facts
-- ## Injuries
-- ## Physical Examination
-- ## Diagnoses
-- ## Findings
-- ## Damages
-  (Include an itemized chart if possible)
-- ## Future Medical Expenses
-- ## Duties Under Durress and Loss of Enjoyment
-- ## Per Diem Assessment
-- ## Summary of Damages
-- ## Similar Case Verdicts
-  (Leave this section blank - it will be filled in later)
-- ## ASK
-  (Include a reasonable ask using the above computations to justify the ask)
+  (Create a vivid narrative of the incident, including all relevant details about the parties involved, the circumstances, and clear establishment of liability)
 
-If relevant to the documents provided, include the following additional sections:
-- ## Imaging Summaries
+- ## Injuries and Treatment Journey
+  (Describe the injuries in narrative form, emphasizing the human experience and progressive nature of the client's medical journey)
 
-IMPORTANT: Maintain consistent markdown formatting throughout and ensure the headings match exactly as specified above.
+- ## Medical Findings and Diagnoses
+  (Present medical evidence and diagnoses in a coherent narrative that explains their significance to the client's experience)
+
+- ## Impact on Daily Life
+  (Create a detailed picture of how the injuries have affected the client's work, family life, and emotional well-being)
+
+- ## Economic Damages
+  (Present all economic damages in narrative form with an itemized chart embedded within this narrative)
+
+- ## Ongoing and Future Care Needs
+  (Explain future treatment requirements and their anticipated impact)
+
+- ## Comparable Case Precedent
+  (Include ONLY ONE strong, relevant case precedent with similar injuries and a favorable outcome. Provide specific details about the case, the injuries involved, and the settlement/verdict amount. Explain how this precedent directly relates to the current case.)
+
+- ## Settlement Demand
+  (Present a clear, justified settlement demand that references the case precedent as supporting evidence. The demand should be approximately 30-40% higher than the total calculated damages to allow room for negotiation.)
+
+If relevant to the documents provided, subtly integrate the following information within the appropriate sections rather than creating separate headings:
+- Physical examination details
+- Imaging results
+- Per diem calculations for pain and suffering
+
+IMPORTANT:
+- Maintain natural language flow throughout
+- Use descriptive, impactful language without exaggeration
+- Create clear connections between medical facts and human impact
+- Ensure the chosen case precedent directly supports the settlement demand
+- Format all headings consistently as level 2 (##) markdown headings
+- Make the settlement demand compelling by tying together all previous sections
 """
 
 def create_message_content(files: List[str]) -> List[Dict[str, Any]]:
@@ -97,76 +120,94 @@ def get_files_from_directory(directory: str) -> List[str]:
             files.append(str(path))
     return files
 
+
 def research_and_add_relevant_verdicts(letter):
     """
-    Add a section that finds the most similar personal injury verdict in court
-    and includes it in the final ask.
+    Add a section that finds a similar verdict in court and includes it in the final ask.
     """
-    # Initialize OpenAI client with Perplexity API
-    client = OpenAI(
-        api_key="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",#os.environ.get("OPENAI_API_KEY"),
-        base_url="https://api.perplexity.ai"
-    )
-    
-    # Extract key information from the letter
-    injury_types = extract_injuries(letter)
-    diagnoses = extract_diagnoses(letter)
-    
-    # Form the search query
-    search_query = (
-        f"Find recent personal injury settlements or verdicts for cases involving "
-        f"{injury_types} with diagnoses including {diagnoses}. "
-        f"Focus on cases with large settlements and include settlement amounts, jurisdiction, and year."
-    )
-    
-    # Create the messages for Perplexity
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a legal research assistant. Find relevant personal injury "
-                "case verdicts that resulted in significant settlements. Provide 1-2 "
-                "specific examples with case names, jurisdictions, settlement amounts, "
-                "and brief case summaries."
-            ),
-        },
-        {
-            "role": "user",
-            "content": search_query,
-        },
-    ]
-    
-    # Make the API call to Perplexity
     try:
-        response = client.chat.completions.create(
-            model="sonar-pro",
-            messages=messages,
+        # Initialize OpenAI client with Perplexity API for research
+        perplexity_client = OpenAI(
+            api_key=os.environ.get("PERPLEXITY_API_KEY", "your-perplexity-key-here"),
+            base_url="https://api.perplexity.ai"
         )
         
-        # Extract the research results
-        research_results = response.choices[0].message.content
+        # Initialize regular OpenAI client for the final integration
+        openai_client = OpenAI(
+            api_key=os.environ.get("OPENAI_API_KEY")
+        )
         
-        # Format the results into a well-structured paragraph
-        similar_cases_content = format_similar_cases_paragraph(research_results)
+        # Use OpenAI to extract key details from the letter
+        extract_messages = [
+            {
+                "role": "system",
+                "content": "Extract key case details from this letter to create a search query."
+            },
+            {
+                "role": "user",
+                "content": f"Read this letter and extract only the key injuries, diagnoses, and circumstances to create a brief search query to find one similar case precedent:\n\n{letter}"
+            }
+        ]
         
-        # Replace the placeholder section with our researched content
-        placeholder_pattern = "## Similar Case Verdicts\n"
-        if placeholder_pattern in letter:
-            parts = letter.split(placeholder_pattern, 1)
-            # Skip any content until the next section
-            next_section_index = parts[1].find("## ")
-            if next_section_index != -1:
-                return parts[0] + "## Similar Case Verdicts\n\n" + similar_cases_content + "\n\n" + parts[1][next_section_index:]
-            else:
-                return parts[0] + "## Similar Case Verdicts\n\n" + similar_cases_content + "\n\n" + parts[1]
-        else:
-            # Fallback: Try to insert before ASK
-            return insert_before_ask_section(letter, "## Similar Case Verdicts\n\n" + similar_cases_content + "\n\n")
+        extract_response = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",  # Faster model is sufficient for this task
+            messages=extract_messages
+        )
+        
+        key_details = extract_response.choices[0].message.content
+        
+        # Get case information from Perplexity with a generic query
+        perplexity_messages = [
+            {
+                "role": "system",
+                "content": "You are a legal researcher. Find ONE relevant case similar to the one described. Format as a direct paragraph without any introductions."
+            },
+            {
+                "role": "user",
+                "content": f"Find ONE legal case settlement similar to this one: {key_details}. Include case name, jurisdiction, settlement amount, year, and brief case summary. Just provide the information directly without any introduction."
+            }
+        ]
+        
+        perplexity_response = perplexity_client.chat.completions.create(
+            model="sonar-pro",
+            messages=perplexity_messages
+        )
+        
+        raw_case_info = perplexity_response.choices[0].message.content
+        
+        # Find where to split the letter
+        split_markers = ["## Similar Case Verdicts", "## Comparable Case Precedent", "## ASK", "## Settlement Demand"]
+        letter_prefix = letter
+        for marker in split_markers:
+            if marker in letter:
+                letter_prefix = letter.split(marker)[0]
+                break
+        
+        # Have OpenAI complete the letter
+        completion_messages = [
+            {
+                "role": "system",
+                "content": "You are an expert legal writer. Complete this demand letter with two final sections."
+            },
+            {
+                "role": "user",
+                "content": f"Complete this demand letter:\n\n{letter_prefix}\n\nCase precedent info:\n{raw_case_info}\n\nWrite two sections: '## Comparable Case Precedent' describing just this ONE case and its relevance, and '## Settlement Demand' that references the case to justify a settlement 35-40% higher than the damages in the letter. Match the letter's existing narrative style."
+            }
+        ]
+        
+        completion_response = openai_client.chat.completions.create(
+            model="gpt-4",
+            messages=completion_messages
+        )
+        
+        new_sections = completion_response.choices[0].message.content
+        
+        # Return the combined letter
+        return letter_prefix + "\n\n" + new_sections
         
     except Exception as e:
-        print(f"Error during research: {e}")
-        # Return the original letter if research fails
-        return letter
+        print(f"Error during research or integration: {e}")
+        return letter  # Return original letter if anything fails
 
 def extract_injuries(letter):
     """Extract injury types from the letter."""
